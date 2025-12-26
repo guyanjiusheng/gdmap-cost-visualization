@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高德地图成本核算可视化</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            height: 100vh;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="map"></div>
+    </div>
+    
+    <script type="text/javascript">
+        // 使用用户提供的高德地图API密钥
+        const AMAP_KEY = '0e24a112022a1f29baeefc258b222acd';
+        
+        // 引入高德地图API及必要插件
+        const script = document.createElement('script');
+        script.src = `https://webapi.amap.com/maps?v=1.4.15&key=${AMAP_KEY}`;
+        script.onload = () => {
+            // 加载必要插件
+            AMap.plugin(['AMap.InfoWindow', 'AMap.ToolBar', 'AMap.Scale', 'AMap.OverView', 'AMap.MapType'], () => {
+                initMap();
+            });
+        };
+        document.head.appendChild(script);
+        
+        let map, markers = [];
+        
+        // 直接定义成本核算数据（可在此处更新）
+        const costData = [
+            {
+                "name": "北京总部",
+                "lng": 116.397428,
+                "lat": 39.90923,
+                "cost": {
+                    "材料": 5000,
+                    "人工": 2000,
+                    "运输": 800,
+                    "总计": 7800
+                }
+            },
+            {
+                "name": "上海分部",
+                "lng": 121.473701,
+                "lat": 31.230416,
+                "cost": {
+                    "材料": 6000,
+                    "人工": 2500,
+                    "运输": 1000,
+                    "总计": 9500
+                }
+            },
+            {
+                "name": "广州分部",
+                "lng": 113.264385,
+                "lat": 23.12911,
+                "cost": {
+                    "材料": 4500,
+                    "人工": 1800,
+                    "运输": 700,
+                    "总计": 7000
+                }
+            },
+            {
+                "name": "深圳研发中心",
+                "lng": 114.057868,
+                "lat": 22.543099,
+                "cost": {
+                    "材料": 4000,
+                    "人工": 3000,
+                    "运输": 600,
+                    "总计": 7600
+                }
+            },
+            {
+                "name": "杭州办事处",
+                "lng": 120.15507,
+                "lat": 30.274085,
+                "cost": {
+                    "材料": 3500,
+                    "人工": 1500,
+                    "运输": 500,
+                    "总计": 5500
+                }
+            }
+        ];
+        
+        function initMap() {
+            // 初始化地图，配置与高德地图一致的界面
+            map = new AMap.Map('map', {
+                zoom: 16,
+                center: [116.397428, 39.90923],
+                mapStyle: 'amap://styles/normal',
+                viewMode: '3D'
+            });
+            
+            // 添加高德地图标准控件
+            map.addControl(new AMap.ToolBar());
+            map.addControl(new AMap.Scale());
+            map.addControl(new AMap.OverView({isOpen: true}));
+            map.addControl(new AMap.MapType());
+            
+            // 渲染成本核算标记
+            renderCostMarkers();
+        }
+        
+        function renderCostMarkers() {
+            // 清除现有标记
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            
+            // 添加成本核算点标记
+            costData.forEach(point => {
+                const marker = new AMap.Marker({
+                    position: [point.lng, point.lat],
+                    title: point.name,
+                    map: map,
+                    label: {
+                        content: point.name,
+                        direction: 'top',
+                        offset: new AMap.Pixel(0, -5),
+                        fontSize: 12
+                    }
+                });
+                
+                // 创建信息窗口
+                const infoWindow = new AMap.InfoWindow({
+                    content: generateInfoContent(point),
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                // 点击标记显示信息窗口
+                marker.on('click', () => {
+                    infoWindow.open(map, marker.getPosition());
+                });
+                markers.push(marker);
+            });
+        }
+        
+        function generateInfoContent(point) {
+            let costHtml = '<ul>';
+            for (const [key, value] of Object.entries(point.cost)) {
+                costHtml += `<li>${key}: ${value}</li>`;
+            }
+            costHtml += '</ul>';
+            
+            return `
+                <div style="padding: 10px;">
+                    <h3>${point.name}</h3>
+                    <p>经度: ${point.lng}</p>
+                    <p>纬度: ${point.lat}</p>
+                    <h4>成本核算信息</h4>
+                    ${costHtml}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
